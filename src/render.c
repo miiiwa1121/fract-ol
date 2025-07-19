@@ -23,9 +23,10 @@ static void	put_color(t_fractol *f, int iter, int x, int y)
 		color = 0x000000;
 	else
 	{
-		r = iter * 5 + f->color_shift;
-		g = iter * 7 + f->color_shift;
-		b = iter * 11 + f->color_shift;
+		// 改造後のコード案
+		r = (int)(sin(0.1 * iter + f->color_shift) * 127 + 128);
+		g = (int)(cos(0.1 * iter + f->color_shift) * 127 + 128);
+		b = (int)(sin(0.1 * iter + f->color_shift + 3) * 127 + 128);
 		color = create_rgb(r, g, b);
 	}
 	put_pixel(f, x, y, color);
@@ -39,7 +40,7 @@ static void	render_pixel(t_fractol *f, t_complex c, int x, int y)
 		iter = mandelbrot(c, f->max_iter);
 	else if (f->fractol_type == 2)
 		iter = julia(c, f->julia_c, f->max_iter);
-	else
+	else 
 		iter = burning_ship(c, f->max_iter);
 	put_color(f, iter, x, y);
 }

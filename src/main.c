@@ -46,7 +46,7 @@ static int	validate_args(int argc, char **argv, t_fractol *f)
 {
 	int	type;
 
-	if (argc < 2 || argc > 4)
+	if (argc < 2 || 4 < argc)
 	{
 		print_usage();
 		return (-1);

@@ -1,32 +1,39 @@
 NAME = fractol
 
-SRCS = main.c init.c events.c utils.c fractols.c render.c
+SRC_DIR = src
+INC_DIR = include
+OBJ_DIR = obj
 
-OBJS = $(SRCS:.c=.o)
+SRCS = $(wildcard $(SRC_DIR)/*.c)
+
+OBJS = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRCS))
 
 CC = gcc
 CFLAGS = -Wall -Wextra -Werror
-INCLUDES = -I. -Iminilibx-linux
+CPPFLAGS = -I$(INC_DIR) -Iminilibx-linux
 LIBMLX = minilibx-linux/libmlx.a
 LIBS = -Lminilibx-linux -lmlx -lXext -lX11 -lm
 
-all: $(LIBMLX) $(NAME)
+RM = rm -f
 
-$(NAME): $(OBJS)
+all: $(NAME)
+
+$(NAME): $(LIBMLX) $(OBJS)
 	$(CC) $(OBJS) $(LIBS) -o $(NAME)
 
 $(LIBMLX):
 	$(MAKE) -C minilibx-linux
 
-%.o: %.c
-	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(OBJ_DIR)
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJS)
+	$(RM) -r $(OBJ_DIR)
 	$(MAKE) -C minilibx-linux clean
 
 fclean: clean
-	rm -f $(NAME)
+	$(RM) $(NAME)
 	$(MAKE) -C minilibx-linux clean
 
 re: fclean all
