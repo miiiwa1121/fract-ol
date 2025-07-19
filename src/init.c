@@ -12,7 +12,7 @@
 
 #include "fractol.h"
 
-void	init_fractol(t_fractol *f, int type)
+void	fractol_init(t_fractol *f, int type)
 {
 	f->mlx = mlx_init();
 	if (!f->mlx)

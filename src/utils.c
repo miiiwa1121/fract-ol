@@ -27,10 +27,10 @@ int	ft_strcmp(const char *s1, const char *s2)
 }
 
 /*
-** put_pixel:
+** put_pixel_to_image:
 **   Draws a pixel at (x, y) with the given color.
 */
-void	put_pixel(t_fractol *f, int x, int y, int color)
+void	put_pixel_to_image(t_fractol *f, int x, int y, int color)
 {
 	char	*dst;
 

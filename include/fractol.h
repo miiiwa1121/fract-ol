@@ -82,8 +82,8 @@ typedef struct s_fractol
 }				t_fractol;
 
 /* Main functions */
-void			init_fractol(t_fractol *f, int type);
-void			render_fractol(t_fractol *f);
+void			fractol_init(t_fractol *f, int type);
+void			fractol_render(t_fractol *f);
 int				main(int argc, char **argv);
 
 /* Fractal calculations */
@@ -92,15 +92,15 @@ int				julia(t_complex z, t_complex c, int max_iter);
 int				burning_ship(t_complex c, int max_iter);
 
 /* Event handlers */
-int				handle_key(int keycode, t_fractol *f);
-int				handle_mouse(int button, int x, int y, t_fractol *f);
-int				handle_mouse_move(int x, int y, t_fractol *f);
-int				close_window(t_fractol *f);
+int				fractol_handle_key(int keycode, t_fractol *f);
+int				fractol_handle_mouse(int button, int x, int y, t_fractol *f);
+int				fractol_handle_mouse_move(int x, int y, t_fractol *f);
+int				fractol_close_window(t_fractol *f);
 
 /* Utils */
-void			put_pixel(t_fractol *f, int x, int y, int color);
+void			put_pixel_to_image(t_fractol *f, int x, int y, int color);
 int				create_rgb(int r, int g, int b);
-void			shift_colors(t_fractol *f);
+void			fractol_shift_colors(t_fractol *f);
 int				ft_strcmp(const char *s1, const char *s2);
 double			ft_atof(const char *str);
 void			print_usage(void);

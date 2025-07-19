@@ -13,16 +13,16 @@
 #include "fractol.h"
 
 /*
-** handle_key:
+** fractol_handle_key:
 **   Handles key events (ESC, arrows, color shift).
 */
-int	handle_key(int keycode, t_fractol *f)
+int	fractol_handle_key(int keycode, t_fractol *f)
 {
 	double	move_step;
 
 	move_step = 1.0 / f->zoom;
 	if (keycode == ESC)
-		close_window(f);
+		fractol_close_window(f);
 	else if (keycode == LEFT)
 		f->offset_x -= move_step;
 	else if (keycode == RIGHT)
@@ -32,7 +32,7 @@ int	handle_key(int keycode, t_fractol *f)
 	else if (keycode == DOWN)
 		f->offset_y += move_step;
 	else if (keycode == 'c' || keycode == 'C')
-		shift_colors(f);
+		fractol_shift_colors(f);
 	else if (keycode == 'r' || keycode == 'R')
 	{
 		f->zoom = 1.0;
@@ -40,15 +40,15 @@ int	handle_key(int keycode, t_fractol *f)
 		f->offset_y = 0.0;
 		f->color_shift = 0;
 	}
-	render_fractol(f);
+	fractol_render(f);
 	return (0);
 }
 
 /*
-** handle_mouse:
+** fractol_handle_mouse:
 **   Handles mouse wheel zoom events at mouse position.
 */
-int	handle_mouse(int button, int x, int y, t_fractol *f)
+int	fractol_handle_mouse(int button, int x, int y, t_fractol *f)
 {
 	double	zoom_factor;
 	double	mouse_re;
@@ -72,16 +72,16 @@ int	handle_mouse(int button, int x, int y, t_fractol *f)
 			f->offset_y = mouse_im + (f->offset_y - mouse_im) * zoom_factor;
 			f->zoom /= zoom_factor;
 		}
-		render_fractol(f);
+		fractol_render(f);
 	}
 	return (0);
 }
 
 /*
-** handle_mouse_move:
+** fractol_handle_mouse_move:
 **   Updates mouse position tracking.
 */
-int	handle_mouse_move(int x, int y, t_fractol *f)
+int	fractol_handle_mouse_move(int x, int y, t_fractol *f)
 {
 	f->mouse_x = x;
 	f->mouse_y = y;
@@ -89,10 +89,10 @@ int	handle_mouse_move(int x, int y, t_fractol *f)
 }
 
 /*
-** close_window:
+** fractol_close_window:
 **   Cleans up and exits the program.
 */
-int	close_window(t_fractol *f)
+int	fractol_close_window(t_fractol *f)
 {
 	if (f->img)
 		mlx_destroy_image(f->mlx, f->img);
@@ -106,10 +106,10 @@ int	close_window(t_fractol *f)
 	exit(0);
 }
 
-void	shift_colors(t_fractol *f)
+void	fractol_shift_colors(t_fractol *f)
 {
 	f->color_shift += 10;
 	if (f->color_shift > 255)
 		f->color_shift = 0;
-	render_fractol(f);
+	fractol_render(f);
 }

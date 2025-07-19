@@ -36,10 +36,10 @@ static int	validate_julia_params(int argc, char **argv, t_fractol *f)
 
 static void	setup_hooks(t_fractol *f)
 {
-	mlx_hook(f->win, KEY_PRESS, KEY_PRESS_MASK, handle_key, f);
-	mlx_hook(f->win, BUTTON_PRESS, BUTTON_PRESS_MASK, handle_mouse, f);
-	mlx_hook(f->win, MOTION_NOTIFY, POINTER_MOTION_MASK, handle_mouse_move, f);
-	mlx_hook(f->win, DESTROY_NOTIFY, STRUCTURE_NOTIFY_MASK, close_window, f);
+	mlx_hook(f->win, KEY_PRESS, KEY_PRESS_MASK, fractol_handle_key, f);
+	mlx_hook(f->win, BUTTON_PRESS, BUTTON_PRESS_MASK, fractol_handle_mouse, f);
+	mlx_hook(f->win, MOTION_NOTIFY, POINTER_MOTION_MASK, fractol_handle_mouse_move, f);
+	mlx_hook(f->win, DESTROY_NOTIFY, STRUCTURE_NOTIFY_MASK, fractol_close_window, f);
 }
 
 static int	validate_args(int argc, char **argv, t_fractol *f)
@@ -73,14 +73,14 @@ int	main(int argc, char **argv)
 	type = validate_args(argc, argv, &f);
 	if (type == -1)
 		return (1);
-	init_fractol(&f, type);
+	fractol_init(&f, type);
 	if (type == 2 && argc == 4)
 	{
 		f.julia_c.re = ft_atof(argv[2]);
 		f.julia_c.im = ft_atof(argv[3]);
 	}
 	setup_hooks(&f);
-	render_fractol(&f);
+	fractol_render(&f);
 	mlx_loop(f.mlx);
 	return (0);
 }

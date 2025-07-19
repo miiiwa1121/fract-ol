@@ -23,13 +23,12 @@ static void	put_color(t_fractol *f, int iter, int x, int y)
 		color = 0x000000;
 	else
 	{
-		// 改造後のコード案
 		r = (int)(sin(0.1 * iter + f->color_shift) * 127 + 128);
 		g = (int)(cos(0.1 * iter + f->color_shift) * 127 + 128);
 		b = (int)(sin(0.1 * iter + f->color_shift + 3) * 127 + 128);
 		color = create_rgb(r, g, b);
 	}
-	put_pixel(f, x, y, color);
+	put_pixel_to_image(f, x, y, color);
 }
 
 static void	render_pixel(t_fractol *f, t_complex c, int x, int y)
@@ -45,7 +44,7 @@ static void	render_pixel(t_fractol *f, t_complex c, int x, int y)
 	put_color(f, iter, x, y);
 }
 
-void	render_fractol(t_fractol *f)
+void	fractol_render(t_fractol *f)
 {
 	int			x;
 	int			y;
