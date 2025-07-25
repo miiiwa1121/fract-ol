@@ -6,7 +6,7 @@
 /*   By: mtsubasa <mtsubasa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/01 15:54:31 by mtsubasa          #+#    #+#             */
-/*   Updated: 2025/07/01 15:54:33 by mtsubasa         ###   ########.fr       */
+/*   Updated: 2025/07/25 12:42:58 by mtsubasa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,4 +35,12 @@ void	fractol_init(t_fractol *f, int type)
 	f->julia_c.im = 0.27015;
 	f->mouse_x = WIDTH / 2;
 	f->mouse_y = HEIGHT / 2;
+}
+
+void	setup_hooks(t_fractol *f)
+{
+	mlx_hook(f->win, KEY_PRESS, KEY_PRESS_MASK, fractol_handle_key, f);
+	mlx_hook(f->win, BUTTON_PRESS, BUTTON_PRESS_MASK, fractol_handle_mouse, f);
+	mlx_hook(f->win, MOTION_NOTIFY, POINTER_MOTION_MASK, fractol_handle_mouse_move, f);
+	mlx_hook(f->win, DESTROY_NOTIFY, STRUCTURE_NOTIFY_MASK, fractol_close_window, f);
 }

@@ -6,7 +6,7 @@
 /*   By: mtsubasa <mtsubasa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/01 15:54:36 by mtsubasa          #+#    #+#             */
-/*   Updated: 2025/07/01 15:54:38 by mtsubasa         ###   ########.fr       */
+/*   Updated: 2025/07/25 13:01:54 by mtsubasa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,23 +23,43 @@ static int	get_fractol_type(char *arg)
 	return (0);
 }
 
+int is_valid_number_str(const char *str)
+{
+    int i;
+    int dot_count;
+    int digit_found;
+
+    i = 0;
+    dot_count = 0;
+    digit_found = 0;
+    if (!str || !*str)
+        return (0);
+    if (str[i] == '-' || str[i] == '+')
+        i++;
+    while (str[i])
+    {
+        if (str[i] == '.')
+            dot_count++;
+        else if (!ft_isdigit(str[i]))
+            return (0);
+        if (ft_isdigit(str[i]))
+            digit_found = 1;
+        i++;
+    }
+    if (dot_count > 1 || !digit_found)
+        return (0);
+    return (1);
+}
+
 static int	validate_julia_params(int argc, char **argv, t_fractol *f)
 {
-	if (argc == 4)
+    if (argc == 4 && is_valid_number_str(argv[2]) && is_valid_number_str(argv[3]))
 	{
 		f->julia_c.re = ft_atof(argv[2]);
 		f->julia_c.im = ft_atof(argv[3]);
 		return (1);
 	}
 	return (0);
-}
-
-static void	setup_hooks(t_fractol *f)
-{
-	mlx_hook(f->win, KEY_PRESS, KEY_PRESS_MASK, fractol_handle_key, f);
-	mlx_hook(f->win, BUTTON_PRESS, BUTTON_PRESS_MASK, fractol_handle_mouse, f);
-	mlx_hook(f->win, MOTION_NOTIFY, POINTER_MOTION_MASK, fractol_handle_mouse_move, f);
-	mlx_hook(f->win, DESTROY_NOTIFY, STRUCTURE_NOTIFY_MASK, fractol_close_window, f);
 }
 
 static int	validate_args(int argc, char **argv, t_fractol *f)
