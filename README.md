@@ -155,8 +155,11 @@ make
   * **由来**: これらの数字は、MiniLibXが内部で使用している**X Window System (X11)** というグラフィックシステムの標準ヘッダファイル（`X11/X.h`や`X11/keysym.h`）で定義されている値です。
   * **なぜ直接定義するのか**: 本来であれば`#include <X11/X.h>`のようにしてこれらの定数を読み込みますが、X11のヘッダファイルは非常に巨大で、不要な情報も多く含まれています。そこで、このプロジェクトで**必要な定数だけを直接書き出す**ことで、コンパイルを速くし、依存関係をシンプルに保つという意図があります。
       * `KEY_PRESS 2`: キーボードのキーが押されたイベントを示します。
+      * `BUTTON_PRESS 4`: マウスのボタンが押されたイベントを示します。
+      * `MOTION_NOTIFY 6`: マウスカーソルが移動したイベントを示します。
+      * `DESTROY_NOTIFY 17`: ウィンドウが閉じられようとしているイベントを示します。
       * `ESC_KEY 65307`: `ESC`キーに対応するキーコード（keysym）です。
-
+      * `LEFT_KEY 65361` から `DOWN_KEY 65364`: それぞれ左、右、上、下の矢印キーに対応するキーコードです。
 #### **プログラム設定の定数**
 ```c
 # define WIDTH 800
@@ -166,6 +169,16 @@ make
 これらはプログラムの挙動を制御する設定値です。
   * `WIDTH`, `HEIGHT`: 生成されるウィンドウの幅と高さを定義します。
   * `MAX_ITER`: フラクタルの計算を何回繰り返すかの最大値です。この値を大きくすると描画が精細になりますが、計算に時間がかかります。
+#### **便利な別名とマウスコード**
+```c
+# define ESC ESC_KEY
+// ...
+# define ZOOM_IN 4
+# define ZOOM_OUT 5
+```
+これらは、既存の定数に別名を付けたり、特定の操作に意味を持たせたりするためのものです。
+  * `ESC`, `LEFT`, `RIGHT`, `UP`, `DOWN`: X11のキーコードに、より短く直感的な別名を付けています。これにより、イベント処理のコードが読みやすくなります。
+  * `ZOOM_IN 4`, `ZOOM_OUT 5`: X11では、マウスホイールのスクロールもボタンプレスとして扱われます。`4`がホイールの上スクロール、`5`が下スクロールに対応する、標準的なボタンコードです。
 
 ### `main.c`
 プログラムの**エントリーポイント**です。以下の役割を担います。
@@ -181,7 +194,13 @@ make
         3.  Julia集合の場合、引数で渡された値を`t_fractol`構造体に格納します。
         4.  `setup_hooks`を呼び出し、キーボードやマウスのイベントハンドラを登録します。
         5.  `render_fractol`で初期画面を描画し、`mlx_loop`でイベント待機状態に入ります。
-
+    #### mlx_loop
+    ```c
+    mlx_loop(f.mlx);
+    - イベントが発生するのを待ち続けます。（イベント待機）
+    - イベントが発生すると、そのイベントを検知し、対応するイベントハンドラ関数を呼び出す。
+    ```
+        
 ### `src/init.c`
 **初期化処理**を専門に行うファイルです。
 * MiniLibXライブラリを初期化し、ウィンドウと描画用のイメージを作成します。
@@ -193,6 +212,41 @@ make
         2.  `mlx_new_window`と`mlx_new_image`でウィンドウと描画領域を作成します。
         3.  `mlx_get_data_addr`でイメージのメモリ情報を取得します。
         4.  ズーム率、オフセット、最大反復回数、ジュリアの初期パラメータなど、`t_fractol`構造体のメンバ変数をデフォルト値に設定します。
+    #### fractol_init
+    ```c
+    void	fractol_init(t_fractol *f, int type)
+    {
+      //グラフィックシステムとの接続を確立
+      f->mlx = mlx_init();
+      //指定されたサイズ (WIDTH, HEIGHT) とタイトル ("Fractol") を持つ新しいウィンドウを画面に作成
+      f->win = mlx_new_window(f->mlx, WIDTH, HEIGHT, "Fractol");
+      //イメージバッファをメモリ上に作成。ピクセルはまずこのイメージに描かれ、最後にまとめてウィンドウに表示
+      f->img = mlx_new_image(f->mlx, WIDTH, HEIGHT);
+      //put_pixel関数で直接ピクセルデータを書き込むため、作成したイメージバッファの、メモリ上の生のアドレス情報を取得
+      f->addr = mlx_get_data_addr(f->img, &f->bits_per_pixel,&f->line_length, &f->endian);
+      f->zoom = 1.0;//ズーム倍率を等倍の1.0に設定
+      f->offset_x = 0.0;//視点の中心を原点 (0,0) に設定
+      f->offset_y = 0.0;//視点の中心を原点 (0,0) に設定
+      f->max_iter = MAX_ITER;//計算の最大繰り返し回数設定
+      f->color_shift = 0;//色のシフト量を0にリセット
+      f->fractol_type = type;//フラクタルの種類を保存
+      f->julia_c.re = -0.7;//ジュリア集合の有名なデフォルト値を設定
+      f->julia_c.im = 0.27015;//ジュリア集合の有名なデフォルト値を設定
+      f->mouse_x = WIDTH / 2;//マウスカーソルの位置の初期値を、画面の中央に設定
+      <!-- f->mouse_y = HEIGHT / 2;//マウスカーソルの位置の初期値を、画面の中央に設定 
+    }
+    ```
+    #### setup_hooks
+    ```c
+    void	setup_hooks(t_fractol *f)
+    {
+      mlx_hook(f->win, KEY_PRESS, KEY_PRESS_MASK, fractol_handle_key, f);
+      //...
+    }
+    - mlx_hook(ウィンドウ, イベントの種類, マスク, 呼び出す関数, 関数に渡す情報);
+    予約内容: 「ウィンドウ上でキーボードのキーが押されたら (KEY_PRESS)、fractol_handle_key関数を呼び出してください。」
+    結果: ユーザーが矢印キーやESCキーなどを押すと、fractol_handle_key関数が実行され、視点の移動やプログラムの終了といった処理が行われます。
+    ```
 
 ### `src/fractal_calculations.c`
 フラクタルの**数学的な計算**の心臓部です。
@@ -201,14 +255,146 @@ make
 * `int mandelbrot(t_complex c, int max_iter)`
     * **目的**: 点`c`がマンデルブロ集合に属するか判定する。
     * **処理**: 複素数`z`を0で初期化し、`z = z^2 + c`の計算を`max_iter`回繰り返します。途中で`z`の絶対値が2（2乗で4）を超えたら、その時点の繰り返し回数を返します。
+    #### mandelbrot
+    ```c
+    int	mandelbrot(t_complex c, int max_iter)
+    {
+      //...
+      double		escape;
+      //...
+      z.re = 0.0;
+      z.im = 0.0;
+      i = 0;
+      while (i < max_iter)
+      {
+        escape = get_escape_value(z);
+        if (escape > 4.0)//発散したとみなしてループを終了
+          return (i);
+        temp = z.re * z.re - z.im * z.im + c.re;
+        z.im = 2.0 * z.re * z.im + c.im;
+        z.re = temp;
+        i++;
+      }
+      return (max_iter);
+    }
+
+    - z.re * z.re - z.im * z.im + c.re
+    - 2.0 * z.re * z.im + c.im
+
+    Zn+1 = Zn² + C
+
+    Zn = x + yi
+    x = z.re
+    y = z.im
+    Zn = z.re + Z.im i
+
+    C = a + bi
+    a = c.re
+    b = c.im
+    C = c.re + b.im i
+
+    新しいx + 新しいyi = (x + yi)² + (a + bi) となる
+    新しいx.re + 新しz.im i = (x.re + z.im i)² + (c.re + c.im i) となる
+
+    Zn² = (x + yi)2
+        = (x + yi) * (x + yi)
+        = x² + xyi + yix + (yi)²
+        = x² + 2xyi + y²i²
+        i² = -1 なので
+        = x² + 2xyi - y²
+        = (x² - y²) + (2xy)i
+
+    Zn² + C = ((x² - y²) + (2xy)i ) + (a + bi)
+            = (x² - y² + a) + (2xy + b)i
+
+    Zn+1 = (x² - y² + a) + (2xy + b)i
+
+    新しい実部: x² - y² + a
+    新しい虚部: 2xy + b
+
+    temp = x² - y² + a
+    temp = z.re * z.re - z.im * z.im + c.re;//完成
+
+    z.im = 2xy + b
+    z.im = 2.0 * z.re * z.im + c.im;//完成
+
+    なぜ temp 変数が必要か？
+    z.re = z.re * z.re - z.im * z.im + c.re; // ここで z.re が更新されてしまう
+    z.im = 2.0 * z.re * z.im + c.im;         // この計算で使う z.re は、更新後の新しい値になってしまう
+    z.imの計算には、更新前の古い z.reの値が必要
+    ```
 
 * `int julia(t_complex z, t_complex c, int max_iter)`
     * **目的**: 点`z`が、定数`c`から生成されるジュリア集合に属するか判定する。
     * **処理**: 計算ロジックはマンデルブロと同一ですが、初期値の`z`がピクセルの座標、`c`が定数である点が異なります。
+    #### julia
+    ```c
+    int	julia(t_complex c, t_complex z, int max_iter)
+    {
+      //...
+      double	escape;
+      i = 0;
+      while (i < max_iter)
+      {
+        escape = get_escape_value(z);
+        if (escape > 4.0)
+          return (i);
+        temp = z.re * z.re - z.im * z.im + c.re;
+        z.im = 2.0 * z.re * z.im + c.im;
+        z.re = temp;
+        i++;
+      }
+      return (max_iter);
+    }
+    - プログラムはmandelbrot関数と全く同じで、引数として渡されるzとcの役割
+    - render_pixel関数が引数を渡すときにマンデルブロ関数への引数の渡し方とジュリア関数への引数の渡し方を反転させて渡している。
+    iter = mandelbrot(c, f->max_iter);//c = c (Z = 0)
+    iter = julia(f->julia_c, c, f->max_iter);//c = Zo, f->julia_c = c
+    ```
 
 * `int burning_ship(t_complex c, int max_iter)`
     * **目的**: 点`c`がバーニングシップ集合に属するか判定する。
     * **処理**: `z = z^2 + c`の計算時に、`z`の実部と虚部の**絶対値**を取ってから2乗の計算を行います。この変更が独特の形状を生み出します。
+    #### burning_ship
+    ```c
+    int	burning_ship(t_complex c, int max_iter)
+    {
+      //...
+      double		escape;
+      z.re = 0.0;
+      z.im = 0.0;
+      i = 0;
+      while (i < max_iter)
+      {
+        escape = get_escape_value(z);
+        if (escape > 4.0)
+          return (i);
+        temp = z.re * z.re - z.im * z.im + c.re;
+        z.im = 2.0 * fabs(z.re) * fabs(z.im) + c.im;
+        z.re = temp;
+        i++;
+      }
+      return (max_iter);
+    }
+    - 計算の途中で絶対値を取る
+    z.im = 2.0 * fabs(z.re) * fabs(z.im) + c.im;
+    計算中の複素数 z がどの象限にあっても、常に第1象限にあるかのように扱われるため、図形の対称性が崩れる
+
+    ```
+
+    #### get_escape_value
+    ```c
+    static double	get_escape_value(t_complex z)
+    {
+      return (z.re * z.re + z.im * z.im);
+    }
+    - 計算の効率を上げるための工夫
+    - 数学的には、この関数は複素数 z の原点(0,0)からの距離の2乗を計算しています。
+    - マンデルブロ集合の計算では、「Zの原点からの距離が2を超えたか」を判定する必要があります。
+    正確な比較  : √(z.re² + z.im²) > 2
+    効率的な比較: z.re² + z.im² > 4
+    - この二つの式は数学的に同じだが、コンピュータにとって平方根の計算は非常に負荷が高い
+    ```
 
 ### `src/render.c`
 **描画処理**を担当します。
@@ -222,6 +408,65 @@ make
         2.  各ピクセル`(x, y)`の座標を、現在のズーム率とオフセットを考慮して複素数`c`に変換します。
         3.  `render_pixel`を呼び出し、そのピクセルの色を決定・描画させます。
         4.  すべてのピクセルの描画後、`mlx_put_image_to_window`で完成したイメージをウィンドウに表示します。
+    #### render_fractol
+    ```c
+    void	fractol_render(t_fractol *f)
+    {
+      //...
+      scale = 4.0 / (f->zoom * WIDTH);
+      y = 0;
+      while (y < HEIGHT)
+      {
+        x = 0;
+        while (x < WIDTH)
+        {
+          c.re = (x - WIDTH / 2) * scale + f->offset_x;
+          c.im = (y - HEIGHT / 2) * scale + f->offset_y;
+          render_pixel(f, c, x, y);
+          x++;
+        }
+        y++;
+      }
+      mlx_put_image_to_window(f->mlx, f->win, f->img, 0, 0);
+    }
+
+    - scale = 4.0 / (f->zoom * WIDTH);
+    複素数平面の幅（4.0）を、ズーム後の仮想的な画面ピクセル数で割る
+    ズームイン (f->zoomが大きくなる) → scaleの値は小さくなり、1ピクセルが表す範囲が狭まる（=拡大表示）。
+    ズームアウト (f->zoomが小さくなる) → scaleの値は大きくなり、1ピクセルが表す範囲が広がる（=縮小表示）。
+
+    - while (y < HEIGHT)
+        while (x < WIDTH)
+    画面上のすべてのピクセル(x, y)に対して、c.re = ...; c.im = ...; render_pixel(...); の3行が実行
+    ```
+    #### render_pixel
+    ```c
+    static void	put_color(t_fractol *f, int iter, int x, int y)
+    {
+      //...
+      if (iter == f->max_iter)
+        color = 0x000000;
+      else
+      {
+        r = (int)(sin(0.1 * iter + f->color_shift) * 127 + 128);
+        g = (int)(cos(0.1 * iter + f->color_shift) * 127 + 128);
+        b = (int)(sin(0.1 * iter + f->color_shift + 3) * 127 + 128);
+        color = create_rgb(r, g, b);
+      }
+      put_pixel_to_image(f, x, y, color);
+    }
+
+    - 	if (iter == f->max_iter)
+        color = 0x000000;
+    iterが、最大繰り返し回数max_iterと等しければ、その点は計算を最後まで繰り返しても発散しなかった、つまりフラクタル集合の内部にあることを意味し、黒で塗りつぶす。
+    - 	else
+        r = (int)(sin(0.1 * iter + f->color_shift) * 127 + 128);
+        g = (int)(cos(0.1 * iter + f->color_shift) * 127 + 128);
+        b = (int)(sin(0.1 * iter + f->color_shift + 3) * 127 + 128);
+    それ以外は、発散するまでの速さ（iterの値）に応じて色付け
+    sin/cosの出力（-1.0〜1.0）を、* 127 + 128することでRGBの色範囲（0〜255）に変換
+
+    ```
 
 ### `src/event_handlers.c`
 キーボードやマウスからの**ユーザー入力**を処理します。
@@ -230,14 +475,110 @@ make
 * `int handle_key(int keycode, t_fractol *f)`
     * **目的**: キーボード入力を処理する。
     * **処理**: `keycode`に応じて`t_fractol`のオフセット（矢印キー）、色シフト（`C`キー）、またはズームやオフセットのリセット（`R`キー）の値を変更し、最後に`render_fractol`を呼び出して画面を更新します。`ESC`キーの場合は`close_window`を呼び出します。
+    #### fractol_handle_key
+    ```c
+    int	fractol_handle_key(int keycode, t_fractol *f)
+    {
+      double	move_step;
+
+      move_step = 1.0 / f->zoom;
+      if (keycode == ESC)
+        fractol_close_window(f);
+      else if (keycode == LEFT)
+        f->offset_x -= move_step;
+      else if (keycode == RIGHT)
+        f->offset_x += move_step;
+      else if (keycode == UP)
+        f->offset_y -= move_step;
+      else if (keycode == DOWN)
+        f->offset_y += move_step;
+      else if (keycode == 'c' || keycode == 'C')
+        fractol_shift_colors(f);
+      else if (keycode == 'r' || keycode == 'R')
+      {
+        f->zoom = 1.0;
+        f->offset_x = 0.0;
+        f->offset_y = 0.0;
+        f->color_shift = 0;
+      }
+      fractol_render(f);
+      return (0);
+    }
+    ```
+    #### fractol_shift_colors
+    ```c
+    void	fractol_shift_colors(t_fractol *f)
+    {
+      f->color_shift += 10;
+      if (f->color_shift > 255)
+        f->color_shift = 0;
+      fractol_render(f);
+    }
+    ```
 
 * `int handle_mouse(int button, int x, int y, t_fractol *f)`
     * **目的**: マウスボタン（特にホイール）入力を処理する。
     * **処理**: マウスホイール操作（`button 4`または`5`）を検知すると、まずマウスカーソルの座標を複素数に変換します。その後、その点を中心にズームイン・アウトするように`f->zoom`と`f->offset_x/y`の値を変更し、`render_fractol`で再描画します。
+    #### fractol_handle_mouse
+    ```c
+    int	fractol_handle_mouse(int button, int x, int y, t_fractol *f)
+    {
+      double	zoom_factor;
+      double	mouse_re;
+      double	mouse_im;
+
+      zoom_factor = 1.5;
+      if (button == ZOOM_IN || button == ZOOM_OUT)
+      {
+        mouse_re = (x - WIDTH / 2.0) * (4.0 / (f->zoom * WIDTH)) + f->offset_x;
+        mouse_im = (y - HEIGHT / 2.0) * (4.0 / (f->zoom * HEIGHT))
+          + f->offset_y;
+        if (button == ZOOM_IN)
+        {
+          f->offset_x = mouse_re + (f->offset_x - mouse_re) / zoom_factor;
+          f->offset_y = mouse_im + (f->offset_y - mouse_im) / zoom_factor;
+          f->zoom *= zoom_factor;
+        }
+        else if (button == ZOOM_OUT)
+        {
+          f->offset_x = mouse_re + (f->offset_x - mouse_re) * zoom_factor;
+          f->offset_y = mouse_im + (f->offset_y - mouse_im) * zoom_factor;
+          f->zoom /= zoom_factor;
+        }
+        fractol_render(f);
+      }
+      return (0);
+    }
+    ```
+    #### fractol_handle_mouse_move
+    ```c
+    int	fractol_handle_mouse_move(int x, int y, t_fractol *f)
+    {
+      f->mouse_x = x;
+      f->mouse_y = y;
+      return (0);
+    }
+    ```
 
 * `int close_window(t_fractol *f)`
     * **目的**: リソースを解放し、プログラムを安全に終了させる。
     * **処理**: `mlx_destroy_image`, `mlx_destroy_window`, `mlx_destroy_display`を順に呼び出してMiniLibX関連のメモリを解放し、`exit(0)`でプログラムを終了します。
+    #### fractol_close_window
+    ```c
+    int	fractol_close_window(t_fractol *f)
+    {
+      if (f->img)
+        mlx_destroy_image(f->mlx, f->img);
+      if (f->win)
+        mlx_destroy_window(f->mlx, f->win);
+      if (f->mlx)
+      {
+        mlx_destroy_display(f->mlx);
+        free(f->mlx);
+      }
+      exit(0);
+    }
+    ```
 
 ### `src/utils.c`
 複数の場所から利用される**補助的な便利関数**をまとめたファイルです。
@@ -248,5 +589,43 @@ make
     * **目的**: イメージ上の指定された座標`(x, y)`に特定の色`color`のピクセルを描画する。
     * **処理**: `f->addr`（イメージの先頭アドレス）からピクセルに対応するメモリアドレスを計算し、そのアドレスに色データを直接書き込みます
 
+    #### create_rgb
+    ```c
+    int	create_rgb(int r, int g, int b)
+    {
+      return (((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff));
+    }
+    - & 0xff
+    0xff = 11111111で確実に0から255までの範囲（8ビット）に収めるための処理
+    - << 16, << 8,
+    色成分ごとに左ビットシフトさせて、ビットが重ならないようにずらしてある
+    R, G, Bの三つの独立した値を、MiniLibXライブラリが一つの色として解釈できる単一の整数値に効率的にまとめている
+    ```
+
+    #### put_pixel_to_image
+    ```c
+    void	put_pixel_to_image(t_fractol *f, int x, int y, int color)
+    {
+      char	*dst;
+
+      if (x >= 0 && x < WIDTH && y >= 0 && y < HEIGHT)
+      {
+        dst = f->addr + (y * f->line_length + x * (f->bits_per_pixel / 8));
+        *(unsigned int *)dst = color;
+      }
+    }
+    - dst = f->addr + (y * f->line_length + x * (f->bits_per_pixel / 8));
+    描画したいピクセル(x,y)が、メモリ上のどの番地にあるかを正確に計算
+    f->addr: イメージデータが格納されているメモリ領域の先頭アドレスです。
+    y * f->line_length: 目的のピクセルがある行の開始アドレスを計算します。
+    f->line_lengthは、画像1行分のデータがメモリ上で何バイトを占めるかを示す値です。これにy（行番号）を掛けることで、目的の行までジャンプします。
+    x * (f->bits_per_pixel / 8): 目的のピクセルの、その行の中での横方向の位置を計算します。
+    f->bits_per_pixelは1ピクセルを表現するのに何ビット使うか（通常は32ビット）を示します。これを8で割ることでバイト数に変換し、x（列番号）を掛けることで、行の先頭から目的のピクセルまでのオフセット（ずれ）を求めます。
+    これらをすべて足し合わせることで、dstというポインタ変数に、ピクセル(x,y)の正確なメモリアドレスが格納されます。
+    - *(unsigned int *)dst = color;
+    ポインタが指し示している先のメモリにアクセスし、そこにcolorの値を代入します。
+    ```
+
 ## 素朴な疑問
-### 
+### Q.　度々出現する４．０は何？
+- マンデルブロ集合やジュリア集合の興味深い部分は、ほとんどが複素数平面上の実部-2.0から+2.0、虚部-2.0から+2.0の範囲に収まっているため

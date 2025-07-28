@@ -6,7 +6,7 @@
 /*   By: mtsubasa <mtsubasa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/01 15:54:42 by mtsubasa          #+#    #+#             */
-/*   Updated: 2025/07/28 17:33:07 by mtsubasa         ###   ########.fr       */
+/*   Updated: 2025/07/28 20:38:47 by mtsubasa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,7 +38,7 @@ static void	render_pixel(t_fractol *f, t_complex c, int x, int y)
 	if (f->fractol_type == 1)
 		iter = mandelbrot(c, f->max_iter);
 	else if (f->fractol_type == 2)
-		iter = julia(c, f->julia_c, f->max_iter);
+		iter = julia(f->julia_c, c, f->max_iter);
 	else
 		iter = burning_ship(c, f->max_iter);
 	put_color(f, iter, x, y);

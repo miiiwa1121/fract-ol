@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   fractols.c                                         :+:      :+:    :+:   */
+/*   fractal_calculations.c                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: mtsubasa <mtsubasa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/01 15:54:25 by mtsubasa          #+#    #+#             */
-/*   Updated: 2025/07/01 15:54:28 by mtsubasa         ###   ########.fr       */
+/*   Updated: 2025/07/28 20:44:03 by mtsubasa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,7 @@ int	mandelbrot(t_complex c, int max_iter)
 	return (max_iter);
 }
 
-int	julia(t_complex z, t_complex c, int max_iter)
+int	julia(t_complex c, t_complex z, int max_iter)
 {
 	int		i;
 	double	escape;
@@ -78,10 +78,6 @@ int	burning_ship(t_complex c, int max_iter)
 		temp = z.re * z.re - z.im * z.im + c.re;
 		z.im = 2.0 * fabs(z.re) * fabs(z.im) + c.im;
 		z.re = temp;
-		if (z.im < 0)
-			z.im = -z.im;
-		if (z.re < 0)
-			z.re = -z.re;
 		i++;
 	}
 	return (max_iter);
