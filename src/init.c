@@ -6,7 +6,7 @@
 /*   By: mtsubasa <mtsubasa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/01 15:54:31 by mtsubasa          #+#    #+#             */
-/*   Updated: 2025/07/25 12:42:58 by mtsubasa         ###   ########.fr       */
+/*   Updated: 2025/07/28 17:32:23 by mtsubasa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,6 +41,8 @@ void	setup_hooks(t_fractol *f)
 {
 	mlx_hook(f->win, KEY_PRESS, KEY_PRESS_MASK, fractol_handle_key, f);
 	mlx_hook(f->win, BUTTON_PRESS, BUTTON_PRESS_MASK, fractol_handle_mouse, f);
-	mlx_hook(f->win, MOTION_NOTIFY, POINTER_MOTION_MASK, fractol_handle_mouse_move, f);
-	mlx_hook(f->win, DESTROY_NOTIFY, STRUCTURE_NOTIFY_MASK, fractol_close_window, f);
+	mlx_hook(f->win, MOTION_NOTIFY, POINTER_MOTION_MASK,
+		fractol_handle_mouse_move, f);
+	mlx_hook(f->win, DESTROY_NOTIFY, STRUCTURE_NOTIFY_MASK,
+		fractol_close_window, f);
 }

@@ -6,7 +6,7 @@
 /*   By: mtsubasa <mtsubasa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/01 15:54:47 by mtsubasa          #+#    #+#             */
-/*   Updated: 2025/07/25 13:03:00 by mtsubasa         ###   ########.fr       */
+/*   Updated: 2025/07/28 17:33:16 by mtsubasa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -84,7 +84,7 @@ double	ft_atof(const char *str)
 	return (result * sign);
 }
 
-int ft_isdigit(int c)
+int	ft_isdigit(int c)
 {
 	return (c >= '0' && c <= '9');
 }

@@ -6,7 +6,7 @@
 /*   By: mtsubasa <mtsubasa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/01 15:54:20 by mtsubasa          #+#    #+#             */
-/*   Updated: 2025/07/25 13:03:37 by mtsubasa         ###   ########.fr       */
+/*   Updated: 2025/07/28 17:34:09 by mtsubasa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -105,6 +105,6 @@ int				ft_strcmp(const char *s1, const char *s2);
 double			ft_atof(const char *str);
 void			print_usage(void);
 void			setup_hooks(t_fractol *f);
-int 			ft_isdigit(int c);
+int				ft_isdigit(int c);
 
 #endif
