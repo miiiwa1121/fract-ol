@@ -6,7 +6,7 @@
 /*   By: mtsubasa <mtsubasa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/01 15:54:36 by mtsubasa          #+#    #+#             */
-/*   Updated: 2025/07/28 17:43:23 by mtsubasa         ###   ########.fr       */
+/*   Updated: 2025/08/02 09:57:55 by mtsubasa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,16 +53,15 @@ int	is_valid_number_str(const char *str)
 
 static int	validate_julia_params(int argc, char **argv, t_fractol *f)
 {
-	if (argc == 4)
-	{
-		if (is_valid_number_str(argv[2]) && is_valid_number_str(argv[3]))
-		{
-			f->julia_c.re = ft_atof(argv[2]);
-			f->julia_c.im = ft_atof(argv[3]);
-			return (1);
-		}
-	}
-	return (0);
+	if (argc != 4 || !is_valid_number_str(argv[2])
+		|| !is_valid_number_str(argv[3]))
+		return (0);
+	f->julia_c.re = ft_atof(argv[2]);
+	f->julia_c.im = ft_atof(argv[3]);
+	if (f->julia_c.re < JULIA_MIN || f->julia_c.re > JULIA_MAX || \
+		f->julia_c.im < JULIA_MIN || f->julia_c.im > JULIA_MAX)
+		return (0);
+	return (1);
 }
 
 static int	validate_args(int argc, char **argv, t_fractol *f)

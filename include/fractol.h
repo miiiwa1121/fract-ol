@@ -6,7 +6,7 @@
 /*   By: mtsubasa <mtsubasa@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/01 15:54:20 by mtsubasa          #+#    #+#             */
-/*   Updated: 2025/07/28 17:34:09 by mtsubasa         ###   ########.fr       */
+/*   Updated: 2025/08/02 10:20:49 by mtsubasa         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,6 +48,10 @@
 # define DOWN DOWN_KEY
 # define ZOOM_IN 4
 # define ZOOM_OUT 5
+
+/* Julia parameter limits */
+# define JULIA_MIN -1000.0
+# define JULIA_MAX 1000.0
 
 /*
 ** Complex number structure (using double)
